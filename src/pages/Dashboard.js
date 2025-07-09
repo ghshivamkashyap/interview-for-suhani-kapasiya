@@ -1,20 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import LaunchTable from "../components/LaunchTable";
 import LaunchModal from "../components/LaunchModal";
-import {
-  fetchAllLaunches,
-  fetchAllRockets,
-  fetchAllLaunchpads,
-  fetchAllPayloads,
-} from "../utils/api";
 import { formatUTCDate } from "../utils/format";
+import useDashboardData from "../hooks/useDashboardData";
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [launches, setLaunches] = useState([]);
-  const [rocketsMap, setRocketsMap] = useState({});
-  const [launchpadsMap, setLaunchpadsMap] = useState({});
-  const [payloadsMap, setPayloadsMap] = useState({});
+  const { launches, rocketsMap, launchpadsMap, payloadsMap, loading } =
+    useDashboardData();
 
   const [selectedLaunch, setSelectedLaunch] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,7 +18,6 @@ const Dashboard = () => {
   // Filtered launches based on dropdown
 
   const getFilteredLaunches = () => {
-    const now = new Date();
     let filtered = [...launches];
 
     // Status filter
@@ -54,13 +45,15 @@ const Dashboard = () => {
       const daysAgo = daysMap[timeRange];
       if (daysAgo) {
         const compareDate = new Date();
-        compareDate.setHours(0, 0, 0, 0); // Set to start of today
+        compareDate.setHours(0, 0, 0, 0); // Start of today
         compareDate.setDate(compareDate.getDate() - daysAgo);
 
         filtered = filtered.filter((launch) => {
           const launchDate = new Date(launch.date_utc);
-          // Only include launches with a valid date
-          return !isNaN(launchDate.getTime()) && launchDate >= compareDate;
+          return (
+            !isNaN(launchDate.getTime()) &&
+            launchDate.getTime() >= compareDate.getTime()
+          );
         });
       }
     }
@@ -78,47 +71,7 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [launchData, rocketData, launchpadData, payloadData] =
-          await Promise.all([
-            fetchAllLaunches(),
-            fetchAllRockets(),
-            fetchAllLaunchpads(),
-            fetchAllPayloads(),
-          ]);
-
-        setLaunches(launchData);
-
-        const rocketMap = {};
-        rocketData.forEach((r) => {
-          rocketMap[r.id] = r.name;
-        });
-        setRocketsMap(rocketMap);
-
-        const launchpadMap = {};
-        launchpadData.forEach((lp) => {
-          launchpadMap[lp.id] = lp.name;
-        });
-        setLaunchpadsMap(launchpadMap);
-
-        // Map all payloads by id
-        const payloadsMap = {};
-        payloadData.forEach((payload) => {
-          if (payload && payload.id) {
-            payloadsMap[payload.id] = payload;
-          }
-        });
-        setPayloadsMap(payloadsMap);
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+  // ...existing code...
 
   const filteredLaunches = getFilteredLaunches();
   const tableData =
