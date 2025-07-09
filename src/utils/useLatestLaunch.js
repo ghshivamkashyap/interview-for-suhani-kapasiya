@@ -16,6 +16,7 @@ const useLatestLaunch = () => {
         );
         if (!res.ok) throw new Error("Failed to fetch launch data");
         const data = await res.json();
+        console.log("SpaceX API response:", data); // Debug: log API response
         setLaunch(data);
       } catch (err) {
         setError(err.message);
