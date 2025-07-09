@@ -1,3 +1,7 @@
+export const fetchAllPayloads = async () => {
+  const res = await fetch("https://api.spacexdata.com/v4/payloads");
+  return res.json();
+};
 // Utility functions for SpaceX API requests
 
 const BASE_URL = "https://api.spacexdata.com/v4";
@@ -42,7 +46,6 @@ export const fetchAllLaunchpads = async () => {
   const res = await fetch("https://api.spacexdata.com/v4/launchpads");
   return res.json();
 };
-
 
 export async function fetchPayloadById(id) {
   const res = await fetch(`${BASE_URL}/payloads/${id}`);

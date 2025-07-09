@@ -5,7 +5,7 @@ import {
   fetchAllLaunches,
   fetchAllRockets,
   fetchAllLaunchpads,
-  fetchPayloadById,
+  fetchAllPayloads,
 } from "../utils/api";
 import { formatUTCDate } from "../utils/format";
 
@@ -18,6 +18,55 @@ const Dashboard = () => {
 
   const [selectedLaunch, setSelectedLaunch] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState("All Time");
+
+  // Dropdown filter state
+  const [filter, setFilter] = useState("All Launches");
+
+  // Filtered launches based on dropdown
+
+  const getFilteredLaunches = () => {
+    const now = new Date();
+    let filtered = [...launches];
+
+    // Status filter
+    if (filter === "Upcoming Launches") {
+      filtered = filtered.filter((l) => l.upcoming === true);
+    } else if (filter === "Successful Launches") {
+      filtered = filtered.filter((l) => l.success === true);
+    } else if (filter === "Failed Launches") {
+      filtered = filtered.filter(
+        (l) => l.success === false && l.upcoming === false
+      );
+    }
+
+    // Time filter
+    if (timeRange !== "All Time") {
+      const daysMap = {
+        "Past Week": 7,
+        "Past Month": 30,
+        "Past 3 Months": 90,
+        "Past 6 Months": 180,
+        "Past Year": 365,
+        "Past 2 Years": 730,
+      };
+
+      const daysAgo = daysMap[timeRange];
+      if (daysAgo) {
+        const compareDate = new Date();
+        compareDate.setHours(0, 0, 0, 0); // Set to start of today
+        compareDate.setDate(compareDate.getDate() - daysAgo);
+
+        filtered = filtered.filter((launch) => {
+          const launchDate = new Date(launch.date_utc);
+          // Only include launches with a valid date
+          return !isNaN(launchDate.getTime()) && launchDate >= compareDate;
+        });
+      }
+    }
+
+    return filtered;
+  };
 
   const openModal = (launch) => {
     setSelectedLaunch(launch);
@@ -29,15 +78,16 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [launchData, rocketData, launchpadData] = await Promise.all([
-          fetchAllLaunches(),
-          fetchAllRockets(),
-          fetchAllLaunchpads(),
-        ]);
+        const [launchData, rocketData, launchpadData, payloadData] =
+          await Promise.all([
+            fetchAllLaunches(),
+            fetchAllRockets(),
+            fetchAllLaunchpads(),
+            fetchAllPayloads(),
+          ]);
 
         setLaunches(launchData);
 
@@ -53,20 +103,9 @@ const Dashboard = () => {
         });
         setLaunchpadsMap(launchpadMap);
 
-        // Gather all unique payload IDs from launches
-        const allPayloadIds = Array.from(
-          new Set(
-            launchData.flatMap((launch) =>
-              Array.isArray(launch.payloads) ? launch.payloads : []
-            )
-          )
-        );
-        // Fetch all payloads in parallel
-        const payloadResponses = await Promise.all(
-          allPayloadIds.map((id) => fetchPayloadById(id).catch(() => null))
-        );
+        // Map all payloads by id
         const payloadsMap = {};
-        payloadResponses.forEach((payload) => {
+        payloadData.forEach((payload) => {
           if (payload && payload.id) {
             payloadsMap[payload.id] = payload;
           }
@@ -81,9 +120,10 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  const filteredLaunches = getFilteredLaunches();
   const tableData =
-    launches.length > 0
-      ? launches.map((launch, idx) => {
+    filteredLaunches.length > 0
+      ? filteredLaunches.map((launch, idx) => {
           // Get first payload id from launch
           const payloadId = Array.isArray(launch.payloads)
             ? launch.payloads[0]
@@ -114,13 +154,39 @@ const Dashboard = () => {
       : [];
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex flex-col items-center justify-center">
       {loading ? (
         <div className="text-gray-500 text-lg font-medium">
           Loading launches...
         </div>
       ) : (
         <>
+          <div className="w-full max-w-6xl flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <select
+              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <option>All Time</option>
+              <option>Past Week</option>
+              <option>Past Month</option>
+              <option>Past 3 Months</option>
+              <option>Past 6 Months</option>
+              <option>Past Year</option>
+              <option>Past 2 Years</option>
+            </select>
+            <select
+              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option>All Launches</option>
+              <option>Upcoming Launches</option>
+              <option>Successful Launches</option>
+              <option>Failed Launches</option>
+            </select>
+          </div>
+
           <LaunchTable data={tableData} onRowClick={openModal} />
           <LaunchModal
             isOpen={isModalOpen}
