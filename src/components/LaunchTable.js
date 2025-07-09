@@ -1,8 +1,9 @@
 import React from "react";
+import StatusBadge from "./StatusBadge";
 
 const LaunchTable = ({ data }) => {
 
-  
+
   return (
     <div className="overflow-x-auto rounded-lg shadow">
       <table className="min-w-full divide-y divide-gray-200 bg-white">
@@ -26,7 +27,7 @@ const LaunchTable = ({ data }) => {
                 <td className="px-4 py-2 whitespace-nowrap">{launch.location || '-'}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{launch.name || '-'}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{launch.orbit || '-'}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{launch.status || '-'}</td>
+                <td className="px-4 py-2 whitespace-nowrap"><StatusBadge status={launch.status}/></td>
                 <td className="px-4 py-2 whitespace-nowrap">{launch.rocket || '-'}</td>
               </tr>
             ))
