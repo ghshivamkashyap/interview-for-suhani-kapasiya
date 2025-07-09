@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import LaunchTable from "../components/LaunchTable";
+import LaunchModal from "../components/LaunchModal";
 import {
   fetchAllLaunches,
   fetchAllRockets,
@@ -14,6 +15,20 @@ const Dashboard = () => {
   const [rocketsMap, setRocketsMap] = useState({});
   const [launchpadsMap, setLaunchpadsMap] = useState({});
   const [payloadsMap, setPayloadsMap] = useState({});
+
+  const [selectedLaunch, setSelectedLaunch] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (launch) => {
+    setSelectedLaunch(launch);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedLaunch(null);
+    setIsModalOpen(false);
+  };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,6 +103,12 @@ const Dashboard = () => {
                 ? "Success"
                 : "Failure",
             rocket: rocketsMap[launch.rocket] || "-",
+            full: {
+              ...launch,
+              payload,
+              rocket: rocketsMap[launch.rocket],
+              launchpad: launchpadsMap[launch.launchpad],
+            },
           };
         })
       : [];
@@ -99,7 +120,17 @@ const Dashboard = () => {
           Loading launches...
         </div>
       ) : (
-        <LaunchTable data={tableData} />
+        <>
+          <LaunchTable data={tableData} onRowClick={openModal} />
+          <LaunchModal
+            isOpen={isModalOpen}
+            onClose={closeModal}
+            launch={selectedLaunch}
+            rocket={selectedLaunch?.rocket}
+            payload={selectedLaunch?.payload}
+            launchpad={selectedLaunch?.launchpad}
+          />
+        </>
       )}
     </div>
   );
