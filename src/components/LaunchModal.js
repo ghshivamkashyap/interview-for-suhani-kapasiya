@@ -14,7 +14,7 @@ const LaunchModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-      <div className="bg-white rounded-xl p-6 w-[90%] max-w-2xl relative shadow-2xl border border-gray-200">
+      <div className="bg-white rounded-xl p-6 w-[90%] max-w-2xl relative shadow-2xl border border-gray-300">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl"
@@ -23,14 +23,14 @@ const LaunchModal = ({
         </button>
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4 ">
           <img
             src={launch.links?.patch?.small || ""}
             alt={launch.name}
             className="w-16 h-16 object-contain rounded-md border border-gray-300"
           />
           <div className="flex-1">
-            <h2 className="text-xl font-semibold">{launch.name}</h2>
+            <h2 className="text-xl font-semibold text-black">{launch.name}</h2>
             <p className="text-sm text-gray-600">{rocket}</p>
           </div>
           <div>
@@ -103,7 +103,7 @@ const LaunchModal = ({
         </p>
 
         {/* Details Grid */}
-        <div className="text-sm text-gray-800 divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+        <div className="text-sm divide-y divide-gray-200 border border-gray-300 rounded-lg overflow-hidden">
           {[
             ["Flight Number", launch.flight_number],
             ["Mission Name", launch.name],
@@ -119,9 +119,12 @@ const LaunchModal = ({
             ["Orbit", payload?.orbit || "-"],
             ["Launch Site", launchpad || "-"],
           ].map(([label, value], idx) => (
-            <div key={idx} className="flex justify-between px-4 py-2">
-              <span className="text-gray-500">{label}</span>
-              <span className="font-medium">{value}</span>
+            <div
+              key={idx}
+              className="flex justify-between px-4 py-2 hover:bg-blue-50 transition-colors"
+            >
+              <span className="text-gray-700 font-medium">{label}</span>
+              <span className="text-gray-700">{value}</span>
             </div>
           ))}
         </div>
@@ -131,4 +134,3 @@ const LaunchModal = ({
 };
 
 export default LaunchModal;
-

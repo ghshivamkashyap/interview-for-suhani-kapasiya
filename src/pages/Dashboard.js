@@ -5,6 +5,75 @@ import Pagination from "../components/Pagination";
 import { formatUTCDate } from "../utils/format";
 import useDashboardData from "../hooks/useDashboardData";
 import Spinner from "../components/Spinner";
+import { Filter, ChevronDown, Calendar } from "lucide-react";
+
+const timeOptions = [
+  "All Time",
+  "Past Week",
+  "Past Month",
+  "Past 3 Months",
+  "Past 6 Months",
+  "Past Year",
+  "Past 2 Years",
+];
+
+const filterOptions = [
+  "All Launches",
+  "Upcoming Launches",
+  "Successful Launches",
+  "Failed Launches",
+];
+
+const Dropdown = ({ value, setValue, options, icon: Icon, className = "" }) => {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef();
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div className={`relative ${className}`} ref={ref}>
+      <button
+        type="button"
+        className="flex items-center gap-2 border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[180px] transition"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {Icon && <Icon size={16} className="text-gray-500" />}
+        <span className="flex-1 text-left truncate">{value}</span>
+        <ChevronDown size={16} className="text-gray-400" />
+      </button>
+      {open && (
+        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
+          {options.map((option) => (
+            <li
+              key={option}
+              className={`px-4 py-2 cursor-pointer hover:bg-blue-50 ${
+                value === option
+                  ? "bg-blue-100 text-blue-700 font-semibold"
+                  : "text-gray-700"
+              }`}
+              onClick={() => {
+                setValue(option);
+                setOpen(false);
+              }}
+              aria-selected={value === option}
+              role="option"
+            >
+              {option}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const { launches, rocketsMap, launchpadsMap, payloadsMap, loading } =
@@ -130,30 +199,19 @@ const Dashboard = () => {
         </div>
       ) : (
         <>
-          <div className="w-full max-w-6xl flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <select
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          <div className="w-full max-w-6xl flex flex-col md:flex-row md:items-center justify-between gap-4 mb-1">
+            <Dropdown
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option>All Time</option>
-              <option>Past Week</option>
-              <option>Past Month</option>
-              <option>Past 3 Months</option>
-              <option>Past 6 Months</option>
-              <option>Past Year</option>
-              <option>Past 2 Years</option>
-            </select>
-            <select
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              setValue={setTimeRange}
+              options={timeOptions}
+              icon={Calendar}
+            />
+            <Dropdown
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option>All Launches</option>
-              <option>Upcoming Launches</option>
-              <option>Successful Launches</option>
-              <option>Failed Launches</option>
-            </select>
+              setValue={setFilter}
+              options={filterOptions}
+              icon={Filter}
+            />
           </div>
 
           <LaunchTable
