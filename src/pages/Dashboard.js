@@ -5,7 +5,8 @@ import Pagination from "../components/Pagination";
 import { formatUTCDate } from "../utils/format";
 import useDashboardData from "../hooks/useDashboardData";
 import Spinner from "../components/Spinner";
-import { Filter, ChevronDown, Calendar } from "lucide-react";
+import { Filter, Calendar } from "lucide-react";
+import Dropdown from "../components/Dropdown";
 
 const timeOptions = [
   "All Time",
@@ -22,58 +23,8 @@ const filterOptions = [
   "Upcoming Launches",
   "Successful Launches",
   "Failed Launches",
+  // "Past Launches",
 ];
-
-const Dropdown = ({ value, setValue, options, icon: Icon, className = "" }) => {
-  const [open, setOpen] = useState(false);
-  const ref = React.useRef();
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  return (
-    <div className={`relative ${className}`} ref={ref}>
-      <button
-        type="button"
-        className="flex items-center gap-2 border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[180px] transition"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        {Icon && <Icon size={16} className="text-gray-500" />}
-        <span className="flex-1 text-left truncate">{value}</span>
-        <ChevronDown size={16} className="text-gray-400" />
-      </button>
-      {open && (
-        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
-          {options.map((option) => (
-            <li
-              key={option}
-              className={`px-4 py-2 cursor-pointer hover:bg-blue-50 ${
-                value === option
-                  ? "bg-blue-100 text-blue-700 font-semibold"
-                  : "text-gray-700"
-              }`}
-              onClick={() => {
-                setValue(option);
-                setOpen(false);
-              }}
-              aria-selected={value === option}
-              role="option"
-            >
-              {option}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
 
 const Dashboard = () => {
   const { launches, rocketsMap, launchpadsMap, payloadsMap, loading } =
@@ -89,21 +40,25 @@ const Dashboard = () => {
 
   // Filtered launches based on dropdown
 
-  const getFilteredLaunches = () => {
+const getFilteredLaunches = () => {
     let filtered = [...launches];
 
-    // Status filter
+    // 🔹 Apply Launch Status Filters
     if (filter === "Upcoming Launches") {
       filtered = filtered.filter((l) => l.upcoming === true);
+    } else if (filter === "Past Launches") {
+      filtered = filtered.filter((l) => l.upcoming === false);
     } else if (filter === "Successful Launches") {
-      filtered = filtered.filter((l) => l.success === true);
+      filtered = filtered.filter(
+        (l) => l.success === true && l.upcoming === false
+      );
     } else if (filter === "Failed Launches") {
       filtered = filtered.filter(
         (l) => l.success === false && l.upcoming === false
       );
     }
 
-    // Time filter
+    // 🔹 Apply Time Range Filter
     if (timeRange !== "All Time") {
       const daysMap = {
         "Past Week": 7,
@@ -115,18 +70,33 @@ const Dashboard = () => {
       };
 
       const daysAgo = daysMap[timeRange];
+
       if (daysAgo) {
-        const compareDate = new Date();
-        compareDate.setHours(0, 0, 0, 0); // Start of today
-        compareDate.setDate(compareDate.getDate() - daysAgo);
+        const now = new Date();
+        const cutoffTime = now.getTime() - daysAgo * 24 * 60 * 60 * 1000;
+
+        console.log("⏳ Time Range Debug");
+        console.log("Selected Range:", timeRange);
+        console.log("Now:", now.toISOString());
+        console.log("Cutoff Date (UTC):", new Date(cutoffTime).toISOString());
 
         filtered = filtered.filter((launch) => {
-          const launchDate = new Date(launch.date_utc);
-          return (
-            !isNaN(launchDate.getTime()) &&
-            launchDate.getTime() >= compareDate.getTime()
-          );
+          const launchTime = new Date(launch.date_utc).getTime();
+          const isValid = !isNaN(launchTime);
+          const isRecent = launchTime >= cutoffTime;
+
+          if (isValid) {
+            console.log(
+              `${isRecent ? "✅" : "❌"} ${launch.name} | ${launch.date_utc}`
+            );
+          } else {
+            console.warn(`⚠️ Invalid date: ${launch.date_utc}`);
+          }
+
+          return isValid && isRecent;
         });
+
+        console.log("Filtered launches after time filter:", filtered.length);
       }
     }
 
@@ -195,7 +165,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col items-center justify-center">
       {loading ? (
         <div className="text-gray-500 text-lg font-medium">
-          <Spinner size={40} />
+          <Spinner />
         </div>
       ) : (
         <>
