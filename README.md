@@ -2,11 +2,6 @@
 
 A modern, responsive React dashboard for exploring SpaceX launches, rockets, and mission data using the official SpaceX API.
 
-## 🚀 Live Demo
-
-[Live Demo](https://interview-for-suhani-kapasiya-3prjtk1bi.vercel.app/)
-
-
 ## 🚀 Features
 
 - **Launch Overview**: Browse all SpaceX launches with comprehensive details
